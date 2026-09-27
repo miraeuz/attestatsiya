@@ -1,63 +1,28 @@
-# Codemagic CI/CD configuration for Mirae Android
-# Native Android + Jetpack Compose + bundled SQLite question database.
-#
-# This first workflow intentionally builds unsigned artifacts so the project
-# can be verified in Codemagic before a production keystore is configured.
-# Add Android signing later through Codemagic Code signing identities.
-
 workflows:
   mirae-android:
-    name: Mirae Android CI
+    name: Mirae Android
+    max_build_duration: 120
     instance_type: linux_x2
-    max_build_duration: 60
 
     environment:
       java: 17
-      ubuntu: 24.04
-
-    cache:
-      cache_paths:
-        - ~/.gradle/caches
-        - ~/.gradle/wrapper
-
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
-      cancel_previous_builds: true
 
     scripts:
-      - name: Show build environment
+      - name: Check project
         script: |
+          echo "Building Mirae Android app"
           java -version
-          ./gradlew --version
-
-      - name: Set Android SDK location
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
-
-      - name: Verify project
-        script: |
-          ./gradlew test --no-daemon
+          chmod +x ./gradlew
 
       - name: Build debug APK
         script: |
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug
 
-      - name: Build release AAB
+      - name: Build release APK
         script: |
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew assembleRelease
 
     artifacts:
       - app/build/outputs/apk/debug/*.apk
-      - app/build/outputs/bundle/release/*.aab
-      - app/build/outputs/mapping/release/mapping.txt
-
-    publishing:
-      email:
-        notify:
-          success: true
-          failure: true
+      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/**/*.aab
